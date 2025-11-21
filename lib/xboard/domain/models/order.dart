@@ -57,8 +57,11 @@ class DomainOrder with _$DomainOrder {
   /// 是否可以支付
   bool get canPay => status == OrderStatus.pending;
 
-  /// 是否可以取消
-  bool get canCancel => status == OrderStatus.pending;
+  /// 是否可以取消（待付款和开通中的订单都可以取消）
+  bool get canCancel => status == OrderStatus.pending || status == OrderStatus.processing;
+
+  /// 是否需要在创建新订单前自动取消（后端要求）
+  bool get shouldAutoCancelBeforeNewOrder => canCancel;
 }
 
 /// 订单状态枚举

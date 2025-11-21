@@ -7,8 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
-import 'package:fl_clash/xboard/sdk/xboard_sdk.dart' show XBoardSDK, PaymentMethod, CouponData;
+import 'package:fl_clash/xboard/sdk/xboard_sdk.dart' show XBoardSDK, CouponData;
 import 'package:fl_clash/xboard/core/core.dart';
+import 'package:fl_clash/xboard/infrastructure/providers/repository_providers.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/payment/providers/xboard_payment_provider.dart';
 import '../widgets/payment_waiting_overlay.dart';
@@ -84,14 +85,16 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
   Future<void> _loadUserBalance() async {
     setState(() => _isLoadingBalance = true);
     try {
-      final userInfo = await XBoardSDK.getUserInfo();
+      // 使用 UserRepository 获取用户信息
+      final userRepo = ref.read(userRepositoryProvider);
+      final result = await userRepo.getUserInfo();
+      final userInfo = result.dataOrNull;
+      
       if (mounted) {
         setState(() => _userBalance = userInfo?.balanceInYuan);
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _userBalance = null);
-      }
+      _logger.debug('[购买] 加载用户余额失败: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoadingBalance = false);
@@ -190,6 +193,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
 
     try {
       final couponCode = _couponController.text.trim();
+      // TODO: 将来添加到 PaymentRepository，目前保留使用 SDK
       final couponData = await XBoardSDK.checkCoupon(
         code: couponCode,
         planId: widget.plan.id,
@@ -327,17 +331,20 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
 
       _logger.debug('[购买] 实付金额: $actualPayAmount (优惠后价格: $displayFinalPrice, 余额抵扣: $balanceToUse)');
 
-      // 获取支付方式
-      final paymentMethods = await XBoardSDK.getPaymentMethods();
+      // 使用 PaymentRepository 获取支付方式
+      final paymentRepo = ref.read(paymentRepositoryProvider);
+      final paymentResult = await paymentRepo.getPaymentMethods();
+      final paymentMethods = paymentResult.dataOrNull ?? [];
+      
       if (paymentMethods.isEmpty) {
         throw Exception('暂无可用的支付方式');
       }
       
-      PaymentMethod? selectedMethod;
+      DomainPaymentMethod? selectedMethod;
       
       // 如果实付金额为0（余额完全抵扣），自动选择第一个支付方式，跳过用户选择
       if (actualPayAmount <= 0) {
-        _logger.debug('[购买] 实付金额为0，自动选择第一个支付方式进行余额支付');
+        _logger.debug('[购买] 实付金额为0，自动选择第一个支付方式');
         selectedMethod = paymentMethods.first;
         // 显示支付等待页面
         if (mounted) {
@@ -389,8 +396,8 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
               });
   }
 
-  Future<PaymentMethod?> _selectPaymentMethod(
-    List<PaymentMethod> methods,
+  Future<DomainPaymentMethod?> _selectPaymentMethod(
+    List<DomainPaymentMethod> methods,
     String tradeNo,
   ) async {
     if (methods.length == 1) {
@@ -417,7 +424,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
     return selected;
   }
 
-  Future<void> _submitPayment(String tradeNo, PaymentMethod method) async {
+  Future<void> _submitPayment(String tradeNo, DomainPaymentMethod method) async {
     _logger.debug('[支付] 提交支付: $tradeNo, 方式: ${method.id}');
       PaymentWaitingManager.updateStep(PaymentStep.loadingPayment);
       PaymentWaitingManager.updateStep(PaymentStep.verifyPayment);

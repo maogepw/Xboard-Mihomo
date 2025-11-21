@@ -1,10 +1,10 @@
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter/services.dart';
+import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:fl_clash/xboard/sdk/xboard_sdk.dart';
+import 'package:fl_clash/xboard/infrastructure/providers/repository_providers.dart';
 class PaymentGatewayPage extends ConsumerStatefulWidget {
   final String paymentUrl;
   final String tradeNo;
@@ -115,7 +115,10 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
       _isCheckingPayment = true;
     });
     try {
-      final order = await XBoardSDK.getOrderByTradeNo(widget.tradeNo);
+      // 使用 OrderRepository 查询订单状态
+      final orderRepo = ref.read(orderRepositoryProvider);
+      final result = await orderRepo.getOrderByTradeNo(widget.tradeNo);
+      final order = result.dataOrNull;
       if (mounted) {
         setState(() {
           _isCheckingPayment = false;

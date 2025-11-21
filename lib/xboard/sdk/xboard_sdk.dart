@@ -43,25 +43,6 @@ export 'src/utils/subscription_url_transformer.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('xboard_sdk.dart');
-// ========== 为了向后兼容，提供类型别名 ==========
-typedef UserInfoData = sdk.UserInfo;
-typedef SubscriptionData = sdk.SubscriptionInfo;
-typedef Plan = sdk.Plan;
-typedef OrderData = sdk.Order;
-typedef PaymentMethodData = sdk.PaymentMethodInfo;
-typedef PaymentMethod = sdk.PaymentMethodInfo;  // 主要别名
-typedef PaymentMethodInfoData = sdk.PaymentMethodInfo;
-typedef InviteData = sdk.InviteInfo;
-typedef InviteCodeData = sdk.InviteCode;
-typedef CommissionDetailData = sdk.CommissionDetail;
-typedef CommissionHistoryItem = sdk.CommissionDetail;  // SDK中没有单独的HistoryItem
-typedef CommissionHistoryItemData = sdk.CommissionDetail;
-typedef WithdrawResultData = sdk.WithdrawResult;
-typedef TransferResultData = sdk.TransferResult;
-typedef VerificationCodeResponseData = sdk.ApiResponse<dynamic>;
-typedef NoticeData = sdk.Notice;
-typedef TicketData = sdk.Ticket;
-typedef Ticket = sdk.TicketDetail;  // TicketDetail是Ticket的扩展版
 
 /// XBoard SDK - SDK 封装类
 ///
@@ -377,7 +358,7 @@ class XBoardSDK {
   // ========== 支付相关 ==========
 
   /// 获取支付方式列表
-  static Future<List<PaymentMethod>> getPaymentMethods() async {
+  static Future<List<sdk.PaymentMethodInfo>> getPaymentMethods() async {
     try {
       final result = await _sdk.payment.getPaymentMethods();
       // API返回PaymentMethodInfo列表，PaymentMethod是其别名
@@ -460,7 +441,7 @@ class XBoardSDK {
   }
 
   /// 获取佣金历史
-  static Future<List<CommissionHistoryItem>> getCommissionHistory({
+  static Future<List<sdk.CommissionDetail>> getCommissionHistory({
     int current = 1,
     int pageSize = 100,
   }) async {
@@ -483,7 +464,7 @@ class XBoardSDK {
   /// [withdrawAccount] 提现账户（具体账号）
   /// 
   /// 注意：v2board 的提现是通过工单系统实现的
-  static Future<WithdrawResultData?> withdrawCommission({
+  static Future<sdk.WithdrawResult> withdrawCommission({
     required String withdrawMethod,
     required String withdrawAccount,
   }) async {
@@ -501,7 +482,7 @@ class XBoardSDK {
 
   /// 划转佣金到余额
   /// [amount] 金额（元），会自动转换为分
-  static Future<TransferResultData?> transferCommissionToBalance(
+  static Future<sdk.TransferResult> transferCommissionToBalance(
       double amount) async {
     try {
       final amountInCents = (amount * 100).round(); // 转换为分
@@ -566,7 +547,7 @@ class XBoardSDK {
   }
 
   /// 获取工单详情
-  static Future<Ticket?> getTicketDetail(int id) async {
+  static Future<sdk.TicketDetail?> getTicketDetail(int id) async {
     try {
       final result = await _sdk.ticket.getTicketDetail(id);
       // TicketDetail就是Ticket的别名

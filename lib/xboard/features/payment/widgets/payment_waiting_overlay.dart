@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/xboard/infrastructure/providers/repository_providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import '../models/payment_step.dart';
-import 'package:fl_clash/xboard/sdk/xboard_sdk.dart';
-import 'package:fl_clash/xboard/core/core.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('payment_waiting_overlay.dart');
-class PaymentWaitingOverlay extends StatefulWidget {
+class PaymentWaitingOverlay extends ConsumerStatefulWidget {
   final VoidCallback? onClose;
   final VoidCallback? onPaymentSuccess;
   final String? tradeNo;
@@ -20,9 +22,9 @@ class PaymentWaitingOverlay extends StatefulWidget {
     this.paymentUrl,
   });
   @override
-  State<PaymentWaitingOverlay> createState() => _PaymentWaitingOverlayState();
+  ConsumerState<PaymentWaitingOverlay> createState() => _PaymentWaitingOverlayState();
 }
-class _PaymentWaitingOverlayState extends State<PaymentWaitingOverlay>
+class _PaymentWaitingOverlayState extends ConsumerState<PaymentWaitingOverlay>
     with TickerProviderStateMixin {
   PaymentStep _currentStep = PaymentStep.cancelingOrders;
   late AnimationController _animationController;
@@ -102,9 +104,11 @@ class _PaymentWaitingOverlayState extends State<PaymentWaitingOverlay>
         _logger.debug('[PaymentWaiting] ===== 开始检测支付状态 =====');
         _logger.debug('[PaymentWaiting] 订单号: $_currentTradeNo');
         
-        // 使用域名服务检查订单状态
-        _logger.debug('[PaymentWaiting] 准备调用 XBoardSDK.getOrderByTradeNo');
-        final orderData = await XBoardSDK.getOrderByTradeNo(_currentTradeNo!);
+        // 使用 OrderRepository 检查订单状态
+        _logger.debug('[支付等待] 准备调用 OrderRepository.getOrderByTradeNo');
+        final orderRepo = ref.read(orderRepositoryProvider);
+        final result = await orderRepo.getOrderByTradeNo(_currentTradeNo!);
+        final orderData = result.dataOrNull;
         _logger.debug('[PaymentWaiting] API 调用完成，结果: ${orderData != null ? '有数据' : '无数据'}');
         
         if (orderData != null) {

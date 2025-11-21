@@ -6,7 +6,7 @@ library;
 import 'dart:convert';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/infrastructure/infrastructure.dart';
-import 'package:fl_clash/xboard/sdk/xboard_sdk.dart';
+import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart' as sdk;
 import 'package:fl_clash/xboard/domain/domain.dart';
 
 /// XBoard 存储服务
@@ -40,39 +40,28 @@ class XBoardStorageService {
 
   // ===== 用户信息 =====
 
-  Future<Result<bool>> saveUserInfo(UserInfoData userInfo) async {
+  Future<void> saveUserInfo(sdk.UserInfo userInfo) async {
     try {
       final userInfoJson = jsonEncode(userInfo.toJson());
-      return await _storage.setString(_userInfoKey, userInfoJson);
-    } catch (e, stackTrace) {
-      return Result.failure(XBoardStorageException(
-        message: '保存用户信息失败',
-        operation: 'write',
-        key: _userInfoKey,
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      await _storage.setString(_userInfoKey, userInfoJson);
+    } catch (e) {
+      // 忽略错误
     }
   }
 
-  Future<Result<UserInfoData?>> getUserInfo() async {
+  Future<sdk.UserInfo?> loadUserInfo() async {
     final result = await _storage.getString(_userInfoKey);
     return result.when(
       success: (userInfoJson) {
-        if (userInfoJson == null) return Result.success(null);
+        if (userInfoJson == null) return null;
         try {
           final Map<String, dynamic> userInfoMap = jsonDecode(userInfoJson);
-          return Result.success(UserInfoData.fromJson(userInfoMap));
-        } catch (e, stackTrace) {
-          return Result.failure(XBoardParseException(
-            message: '解析用户信息失败',
-            dataType: 'UserInfo',
-            originalError: e,
-            stackTrace: stackTrace,
-          ));
+          return sdk.UserInfo.fromJson(userInfoMap);
+        } catch (e) {
+          return null;
         }
       },
-      failure: (error) => Result.failure(error),
+      failure: (error) => null,
     );
   }
 
@@ -154,39 +143,28 @@ class XBoardStorageService {
 
   // ===== 订阅信息（保留兼容） =====
 
-  Future<Result<bool>> saveSubscriptionInfo(SubscriptionData subscriptionInfo) async {
+  Future<void> saveSubscriptionInfo(sdk.SubscriptionInfo subscriptionInfo) async {
     try {
       final subscriptionInfoJson = jsonEncode(subscriptionInfo.toJson());
-      return await _storage.setString(_subscriptionInfoKey, subscriptionInfoJson);
-    } catch (e, stackTrace) {
-      return Result.failure(XBoardStorageException(
-        message: '保存订阅信息失败',
-        operation: 'write',
-        key: _subscriptionInfoKey,
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      await _storage.setString(_subscriptionInfoKey, subscriptionInfoJson);
+    } catch (e) {
+      // 忽略错误
     }
   }
 
-  Future<Result<SubscriptionData?>> getSubscriptionInfo() async {
+  Future<sdk.SubscriptionInfo?> loadSubscriptionInfo() async {
     final result = await _storage.getString(_subscriptionInfoKey);
     return result.when(
       success: (subscriptionInfoJson) {
-        if (subscriptionInfoJson == null) return Result.success(null);
+        if (subscriptionInfoJson == null) return null;
         try {
           final Map<String, dynamic> subscriptionInfoMap = jsonDecode(subscriptionInfoJson);
-          return Result.success(SubscriptionData.fromJson(subscriptionInfoMap));
-        } catch (e, stackTrace) {
-          return Result.failure(XBoardParseException(
-            message: '解析订阅信息失败',
-            dataType: 'SubscriptionInfo',
-            originalError: e,
-            stackTrace: stackTrace,
-          ));
+          return sdk.SubscriptionInfo.fromJson(subscriptionInfoMap);
+        } catch (e) {
+          return null;
         }
       },
-      failure: (error) => Result.failure(error),
+      failure: (error) => null,
     );
   }
 

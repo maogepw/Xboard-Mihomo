@@ -1,11 +1,11 @@
-import 'package:fl_clash/xboard/sdk/xboard_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/xboard/domain/domain.dart';
 
 /// 支付方式选择对话框
 class PaymentMethodSelectorDialog extends StatefulWidget {
-  final List<PaymentMethod> paymentMethods;
-  final PaymentMethod? selectedMethod;
+  final List<DomainPaymentMethod> paymentMethods;
+  final DomainPaymentMethod? selectedMethod;
 
   const PaymentMethodSelectorDialog({
     super.key,
@@ -17,12 +17,12 @@ class PaymentMethodSelectorDialog extends StatefulWidget {
   State<PaymentMethodSelectorDialog> createState() => _PaymentMethodSelectorDialogState();
 
   /// 显示支付方式选择对话框
-  static Future<PaymentMethod?> show(
+  static Future<DomainPaymentMethod?> show(
     BuildContext context, {
-    required List<PaymentMethod> paymentMethods,
-    PaymentMethod? selectedMethod,
+    required List<DomainPaymentMethod> paymentMethods,
+    DomainPaymentMethod? selectedMethod,
   }) async {
-    return await showDialog<PaymentMethod>(
+    return await showDialog<DomainPaymentMethod>(
       context: context,
       builder: (context) => PaymentMethodSelectorDialog(
         paymentMethods: paymentMethods,
@@ -33,7 +33,7 @@ class PaymentMethodSelectorDialog extends StatefulWidget {
 }
 
 class _PaymentMethodSelectorDialogState extends State<PaymentMethodSelectorDialog> {
-  PaymentMethod? _selectedMethod;
+  DomainPaymentMethod? _selectedMethod;
 
   @override
   void initState() {
@@ -63,9 +63,9 @@ class _PaymentMethodSelectorDialogState extends State<PaymentMethodSelectorDialo
             
             return ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              leading: method.icon != null && method.icon!.isNotEmpty
+              leading: method.iconUrl != null && method.iconUrl!.isNotEmpty
                   ? Image.network(
-                      method.icon!,
+                      method.iconUrl!,
                       width: 32,
                       height: 32,
                       errorBuilder: (context, error, stackTrace) {
@@ -80,16 +80,16 @@ class _PaymentMethodSelectorDialogState extends State<PaymentMethodSelectorDialo
                   color: isSelected ? Theme.of(context).primaryColor : null,
                 ),
               ),
-              subtitle: method.feePercent > 0
+              subtitle: method.feePercentage > 0
                   ? Text(
-                      '${AppLocalizations.of(context).xboardHandlingFee}: ${method.feePercent}%',
+                      '${AppLocalizations.of(context).xboardHandlingFee}: ${method.feePercentage.toStringAsFixed(1)}%',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
                       ),
                     )
                   : null,
-              trailing: Radio<String>(
+              trailing: Radio<int>(
                 value: method.id,
                 groupValue: _selectedMethod?.id,
                 onChanged: (value) {

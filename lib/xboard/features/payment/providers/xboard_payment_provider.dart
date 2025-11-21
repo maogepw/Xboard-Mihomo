@@ -55,7 +55,10 @@ class XBoardPaymentNotifier extends Notifier<void> {
       
       final orders = result.dataOrNull ?? [];
       // status: 0=待付款, 1=开通中, 2=已取消, 3=已完成, 4=已折抵
-      final pendingOrders = orders.where((order) => order.status == 0).toList();
+      // 显示"待付款"和"开通中"的订单
+      final pendingOrders = orders.where((order) => 
+        order.status == OrderStatus.pending || order.status == OrderStatus.processing
+      ).toList();
       ref.read(pendingOrdersProvider.notifier).state = pendingOrders;
       ref.read(userUIStateProvider.notifier).state = const UIState(isLoading: false);
       _logger.info('待支付订单加载成功，共 ${pendingOrders.length} 个');
@@ -227,11 +230,11 @@ class XBoardPaymentNotifier extends Notifier<void> {
       }
       
       final orders = result.dataOrNull ?? [];
-      // status: 0=待付款, 1=开通中, 2=已取消, 3=已完成, 4=已折抵
-      final pendingOrders = orders.where((order) => order.status == 0).toList();
+      // 筛选需要在创建新订单前自动取消的订单（待付款和开通中）
+      final ordersToCancel = orders.where((order) => order.shouldAutoCancelBeforeNewOrder).toList();
 
       int canceledCount = 0;
-      for (final order in pendingOrders) {
+      for (final order in ordersToCancel) {
         if (order.tradeNo != null && order.tradeNo!.isNotEmpty) {
           try {
             final cancelResult = await orderRepo.cancelOrder(order.tradeNo!);
