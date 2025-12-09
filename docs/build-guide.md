@@ -180,7 +180,7 @@ dart setup.dart macos --arch amd64   # Intel 芯片
 dart setup.dart macos --arch arm64   # Apple Silicon
 ```
 
-**构建输出：** `build/macos/Build/Products/Release/Xboard Mihomo.app`
+**构建输出：** `build/macos/Build/Products/Release/Orange.app`
 
 ---
 
